@@ -34,7 +34,6 @@ int moisturePin = A2;
 int tempturePin = 6;
 DFRobot_DHT11 temptureSens;
 
-
 void callback(char* topic, byte* payload, unsigned int length) {
   Serial.print("Message arrived [");
   Serial.print(topic);
@@ -75,19 +74,20 @@ void setup()
   Serial.begin(38400);
 
   // TODO: Set Digital Input and Output
+  pinMode(tempturePin, INPUT);
 
-  //   while (status != WL_CONNECTED) {
-  //   Serial.print("Attempting to connect to SSID: ");
-  //   Serial.println(ssid);
-  //   // Connect to WPA/WPA2 network. Change this line if using open or WEP network:
-  //   status = WiFi.begin(ssid, pass);
+  while (status != WL_CONNECTED) {
+    Serial.print("Attempting to connect to SSID: ");
+    Serial.println(ssid);
+    // Connect to WPA/WPA2 network. Change this line if using open or WEP network:
+    status = WiFi.begin(ssid, pass);
 
-  //   // wait 10 seconds for connection:
-  //   delay(10000);
-  // }
+    // wait 10 seconds for connection:
+    delay(10000);
+  }
 
-  // client.setServer(mqttServer, 1883);
-  // client.setCallback(callback);
+  client.setServer(mqttServer, 1883);
+  client.setCallback(callback);
 
   // Allow the hardware to sort itself out
   delay(1500);
@@ -95,27 +95,45 @@ void setup()
 
 void loop()
 {
-  //if (!client.connected()) {
-  //  reconnect();
-  //}
-  //client.loop();
+  if (!client.connected()) {
+    reconnect();
+  }
+  client.loop();
 
-  char soilHumid[10];
-  sprintf(soilHumid, "%f", analogRead(moisturePin));
+  // Soil Humidity
+  char soilHumid[20] = "Soil Humid: ";
+  sprintf(
+    soilHumid + 12,
+    "%d",
+    analogRead(moisturePin)
+  );
 
-  Serial.print("Soil Humid");
   Serial.println(soilHumid);
 
+  // DHT11 data
   temptureSens.read(tempturePin);
-  char dhtTemp[10];
-  sprintf(dhtTemp,"%.2f" ,temptureSens.temperature);
-  char dhtHumid[10];
-  sprintf(dhtHumid,"%.2f" ,temptureSens.humidity);
 
-  Serial.print("DHT Humid ");
-  Serial.print(dhtHumid);
-  Serial.print(" Temp ");
+  char dhtTemp[20] = "DHT Humid: ";
+  sprintf(
+    dhtTemp + 11,
+    "%.2f",
+    temptureSens.temperature
+  );
+
+  char dhtHumid[20] = "Temp: ";
+  sprintf(
+    dhtHumid + 6,
+    "%.2f",
+    temptureSens.humidity
+  );
+
   Serial.println(dhtTemp);
+  Serial.println(dhtHumid);
 
-  // client.publish();
+  char result[100];
+  strcpy(result, soilHumid);
+  strcat(result, dhtTemp);
+  strcat(result, dhtHumid);
+
+  client.publish(publishTopic, result);
 }
