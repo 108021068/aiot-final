@@ -136,4 +136,5 @@ void loop()
   strcat(result, dhtHumid);
 
   client.publish(publishTopic, result);
+  delay(1000);
 }
