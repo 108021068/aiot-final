@@ -16,7 +16,7 @@
 #include <WiFi.h>
 #include <PubSubClient.h>
 
-#include <DFRobot_DHT11.h>
+#include <DHT.h>
 
 // Update these with values suitable for your network.
 
@@ -32,7 +32,7 @@ char subscribeTopic[] = "inTopic";
 
 int moisturePin = A2;
 int tempturePin = 6;
-DFRobot_DHT11 temptureSens;
+DHT temptureSens(tempturePin, DHT11);
 
 void callback(char* topic, byte* payload, unsigned int length) {
   Serial.print("Message arrived [");
@@ -73,6 +73,9 @@ void setup()
   // Default
   Serial.begin(38400);
 
+  // Sart dht
+  temptureSens.begin();
+
   // TODO: Set Digital Input and Output
   pinMode(tempturePin, INPUT);
 
@@ -110,21 +113,18 @@ void loop()
 
   Serial.println(soilHumid);
 
-  // DHT11 data
-  temptureSens.read(tempturePin);
-
   char dhtTemp[20] = "DHT Humid: ";
   sprintf(
     dhtTemp + 11,
     "%.2f",
-    temptureSens.temperature
+    temptureSens.readTemperature()
   );
 
   char dhtHumid[20] = "Temp: ";
   sprintf(
     dhtHumid + 6,
     "%.2f",
-    temptureSens.humidity
+    temptureSens.readHumidity()
   );
 
   Serial.println(dhtTemp);
